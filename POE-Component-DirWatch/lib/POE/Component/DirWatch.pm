@@ -1,16 +1,16 @@
 package POE::Component::DirWatch;
 
-our $VERSION = "0.10";
+our $VERSION = "0.100000";
 
 use POE;
 use Moose;
-use Path::Class::Dir;
+use MooseX::Types::Path::Class qw/Dir/;
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#--------#
 
-has directory => (is => 'rw', isa => 'Str', required => 1);
-has interval  => (is => 'rw', isa => 'Int', required => 1, default => sub{ 1 });
-has alias     => (is => 'rw', isa => 'Str', required => 1, default => 'dirwatch');
+has alias => (is => 'rw', isa => 'Str', required => 1, default => 'dirwatch');
+has directory => (is => 'rw', isa => Dir, required => 1, coerce => 1);
+has interval  => (is => 'rw', isa => 'Int', required => 1, default => sub{1});
 
 has next_poll => (
                   is => 'rw', isa => 'Int',
@@ -37,28 +37,27 @@ has file_callback => (
                      );
 
 sub BUILD{
-    my ($self, $args) = @_;
-
-    POE::Session->create
-          (
-           object_states  =>
-           [ $self,
-             {
-              _start   => '_start',
-              _pause   => '_pause',
-              _resume  => '_resume',
-              shutdown => '_shutdown',
-              poll     => '_poll',
-              ($self->has_dir_callback  ? (dir_callback  => '_dir_callback')  : () ),
-              ($self->has_file_callback ? (file_callback => '_file_callback') : () ),
-             },
-           ]
-          );
+  my ($self, $args) = @_;
+  POE::Session->create
+    (
+     object_states =>
+     [ $self,
+       {
+        _start   => '_start',
+        _pause   => '_pause',
+        _resume  => '_resume',
+        shutdown => '_shutdown',
+        poll     => '_poll',
+        ($self->has_dir_callback  ? (dir_callback  => '_dir_callback')  : () ),
+        ($self->has_file_callback ? (file_callback => '_file_callback') : () ),
+       },
+     ]
+    );
 }
 
 sub session{ $poe_kernel->alias_resolve( shift->alias ) }
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 sub _start{
     my ($self, $kernel) = @_[OBJECT, KERNEL];
@@ -89,7 +88,7 @@ sub _resume{
     $self->next_poll( $kernel->alarm_set(poll => $when) );
 }
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 sub pause{
     my ($self, $until) = @_;
@@ -108,15 +107,14 @@ sub shutdown{
     $poe_kernel->post($self->alias, 'shutdown');
 }
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 sub _poll {
     my ($self, $kernel) = @_[OBJECT, KERNEL];
     $self->clear_next_poll;
-    my $dir = Path::Class::Dir->new($self->directory);
     my $filter = $self->has_filter ? $self->filter : undef;
 
-    while (my $child = $dir->next) {
+    while (my $child = $self->directory->next) {
       next if !$child->is_dir && $child->basename =~ /^\.+$/;
       next if ref $filter && !$filter->($child);
 
@@ -139,7 +137,7 @@ sub _dir_callback {
     $self->dir_callback->($dir);
 }
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 sub _shutdown {
     my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
@@ -149,9 +147,11 @@ sub _shutdown {
     $kernel->alarm_remove_all();
 }
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 1;
+
+__PACKAGE__->make_immutable;
 
 __END__;
 
@@ -179,19 +179,9 @@ POE::Component::DirWatch::Object - POE directory watcher object
 
 =head1 DESCRIPTION
 
-POE::Component::DirWatch::Object watches a directory for files. Upon finding
-a file it will invoke the user-supplied callback function.
-
-This module was primarily designed as an L<Moose>-based replacement for
- L<POE::Component::Dirwatch>. While all known functionality of the original is
-meant to be covered in a similar way there is some subtle differences.
-
-Its primary intended use is processing a "drop-box" style
-directory, such as an FTP upload directory.
-
-Apparently the original DirWatch no longer exists. Yes, I know Moose is a bit heavy
-but I don't really care. The original is still on BackPAN if you don't like my
-awesome replacement.
+POE::Component::DirWatch watches a directory for files or directories.
+Upon finding either it will invoke a user-supplied callback function
+depending on whether the item is a file or directory.
 
 =head1 Public Methods
 
@@ -203,18 +193,18 @@ awesome replacement.
 
 Returns a reference to the actual POE session.
 Please avoid this unless you are subclassing. Even then it is recommended that
-it is always used as C<$watcher-E<gt>session-E<gt>method> because copying the object
-reference around could create a problem with lingering references.
+it is always used as C<$watcher-E<gt>session-E<gt>method> because copying the
+object reference around could create a problem with lingering references.
 
 =head2 pause [$until]
 
-Synchronous call to _pause. This just posts an immediate _pause event to the kernel.
-Safe for use outside of POEish land (doesnt use @_[KERNEL, ARG0...])
+Synchronous call to _pause. This just posts an immediate _pause event to the
+kernel. Safe for use outside of POEish land (doesnt use @_[KERNEL, ARG0...])
 
 =head2 resume [$when]
 
-Synchronous call to _resume. This just posts an immediate _resume event to the kernel.
-Safe for use outside of POEish land (doesnt use @_[KERNEL, ARG0...])
+Synchronous call to _resume. This just posts an immediate _resume event to the
+kernel. Safe for use outside of POEish land (doesnt use @_[KERNEL, ARG0...])
 
 =head2 shutdown
 
@@ -234,12 +224,13 @@ The path of the directory to watch.
 
 =head2 interval
 
-The interval waited between the end of a directory poll and the start of another.
- Default to 1 if not specified.
+The interval waited between the end of a directory poll and the start of
+another. Default to 1 if not specified.
 
-WARNING: This is number NOT the interval between polls. A lengthy blocking callback,
-high-loads, or slow applications may delay the time between polls. You can see:
-L<http://poe.perl.org/?POE_Cookbook/Recurring_Alarms> for more info.
+WARNING: This is number NOT the interval between polls. A lengthy blocking
+callback, high-loads, or slow applications may delay the time between polls.
+You can see: L<http://poe.perl.org/?POE_Cookbook/Recurring_Alarms> for more
+info.
 
 =head2 callback
 
@@ -251,7 +242,8 @@ This may take 2 different values. A 2 element arrayref or a single coderef.
 When given an arrayref the first item will be treated as an object and the
 second as a method name. See the SYNOPSYS.
 
-It usually makes most sense to process the file and remove it from the directory.
+It usually makes most sense to process the file and remove it from the
+directory.
 
     #Example
     callback => sub{ my($filename, $fullpath) = @_ }
@@ -290,15 +282,18 @@ Moose's C<before> and C<after> work.
 
 =head2 _start
 
-Runs when C<$poe_kernel-E<gt>run> is called. It will create a new DirHandle watching
-to C<$watcher-E<gt>directory>, set the session's alias and schedule the first C<poll> event.
+Runs when C<$poe_kernel-E<gt>run> is called. It will create a new DirHandle
+watching to C<$watcher-E<gt>directory>, set the session's alias and schedule
+the first C<poll> event.
 
 =head2 _poll
 
-Triggered by the C<poll> event this is the re-occurring action. _poll will use get a
-list of all files in the directory and call C<_aio_callback> with the list of filenames (if any)
+Triggered by the C<poll> event this is the re-occurring action. _poll will use
+get a list of all files in the directory and call C<_aio_callback> with the
+list of filenames (if any)
 
-I promise I will make this async soon, it's just that IO::AIO doesnt work on FreeBSD.
+I promise I will make this async soon, it's just that IO::AIO doesnt work on
+FreeBSD.
 
 =head2 _aio_callback
 
@@ -306,23 +301,23 @@ Schedule the next poll and dispatch any files found.
 
 =head2 _dispatch
 
-Triggered by the C<dispatch> event, it recieves a filename in ARG0, it then proceeds to
-run the file through the filter and schedule a callback.
+Triggered by the C<dispatch> event, it recieves a filename in ARG0, it then
+proceeds to run the file through the filter and schedule a callback.
 
 =head2 _callback
 
-Triggered by the C<callback> event, it  derefernces the argument list that is passed to
-it in ARG0 and calls the appropriate coderef or object-method pair with
-$filename and $fullpath in @_;
+Triggered by the C<callback> event, it  derefernces the argument list that is
+passed to it in ARG0 and calls the appropriate coderef or object-method pair
+with $filename and $fullpath in @_;
 
 =head2 _pause [$until]
 
-Triggered by the C<_pause> event this method will remove the alarm scheduling the
-next directory poll. It takes an optional argument of $until, which dictates when the
-polling should begin again. If $until is an integer smaller than the result of time()
-it will treat $until as the number of seconds to wait before polling. If $until is an
-integer larger than the result of time() it will treat $until as an epoch timestamp
-and schedule the poll alarm accordingly.
+Triggered by the C<_pause> event this method will remove the alarm scheduling
+the next directory poll. It takes an optional argument of $until, which
+dictates when the polling should begin again. If $until is an integer smaller
+than the result of time() it will treat $until as the number of seconds to wait
+before polling. If $until is an integer larger than the result of time() it
+will treat $until as an epoch timestamp.
 
      #these two are the same thing
      $watcher->pause( time() + 60);
@@ -335,13 +330,14 @@ and schedule the poll alarm accordingly.
 
 =head2 _resume [$when]
 
-Triggered by the C<_resume> event this method will remove the alarm scheduling the
-next directory poll (if any) and schedule a new poll alarm. It takes an optional
-argument of $when, which dictates when the polling should begin again. If $when is
-an integer smaller than the result of time() it will treat $until as the number of
-seconds to wait before polling. If $until is an integer larger than the result of
-time() it will treat $when as an epoch timestamp and schedule the poll alarm
-accordingly. If not specified, the alarm will be scheduled with a delay of zero.
+Triggered by the C<_resume> event this method will remove the alarm scheduling
+the next directory poll (if any) and schedule a new poll alarm. It takes an
+optional argument of $when, which dictates when the polling should begin again.
+If $when is an integer smaller than the result of time() it will treat $until
+as the number of seconds to wait before polling. If $until is an integer larger
+than the result of time() it will treat $when as an epoch timestamp and
+schedule the poll alarm accordingly. If not specified, the alarm will be
+scheduled with a delay of zero.
 
 =head2 _shutdown
 
@@ -349,7 +345,8 @@ Delete the C<heap>, remove the alias we are using and remove all set alarms.
 
 =head2 BUILD
 
-Constructor. C<create()>s a L<POE::Session> and stores it in C<$self-E<gt>session>.
+Constructor. C<create()>s a L<POE::Session> and stores it in
+C<$self-E<gt>session>.
 
 =head2 meta
 

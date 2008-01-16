@@ -1,16 +1,16 @@
-package POE::Component::DirWatch::NewFile;
+package POE::Component::DirWatch::New;
 
 use POE;
 use Moose;
 use File::Signature;
 
-our $VERSION = "0.02";
+our $VERSION = "0.001000";
 
 extends 'POE::Component::DirWatch';
 
 has 'signatures' => (is => 'ro', isa => 'HashRef', default => sub{{}});
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 after _file_callback => sub {
   my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
@@ -31,22 +31,22 @@ before _poll => sub{
 
 __END__;
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 =head1 NAME
 
-POE::Component::DirWatch::NewFile
+POE::Component::DirWatch::New
 
 =head1 DESCRIPTION
 
-POE::Component::DirWatch::NewFile extends DirWatch to exclude previously seen files
+POE::Component::DirWatch::New extends DirWatch to exclude previously seen files
 
 =head1 ATTRIBUTES
 
 =head2 signatures
 
-Read-write. Will return a hashref in which keys will be the full path of the files
-seen and the value will be a File::Signature object
+Read-write. Will return a hashref in which keys will be the full path of the
+files seen and the value will be a File::Signature object
 
 =head1 METHODS
 
@@ -54,8 +54,8 @@ seen and the value will be a File::Signature object
 
 C<override '_file_callback'>  Don't call the callback if file has been seen.
 
-C<after '_file_callback'> Add the file's signature to C<signatures> if it doesnt
-yet exist.
+C<after '_file_callback'> Add the file's signature to C<signatures> if it
+doesnt yet exist.
 
 =head2 _poll
 

@@ -1,34 +1,46 @@
-package POE::Component::DirWatch::Object::Unmodified;
-
-use POE;
+package POE::Component::DirWatch::Object::Untouched;
+use strict;
+use warnings;
 use Moose;
-use File::Signature;
+use Array::Compare;
+use POE;
 
 our $VERSION = "0.02";
 
-extends 'POE::Component::DirWatch::NewFile';
+extends 'POE::Component::DirWatch::Object';
 
-has modified_interval=> (is => 'rw', isa => 'Num', required => 1, default => 1);
+has 'stat_interval'=> (is => 'rw', isa => 'Num', required => 1, default => 1);
+has 'cmp'          => (is => 'rw', isa => 'Object', required => 1,
+		       default => sub{ Array::Compare->new } );
 
 #--------#---------#---------#---------#---------#---------#---------#---------#
 
+#Remind me of stat:
+#    7 size     total size of file, in bytes
+#    8 atime    last access time in seconds since the epoch
+#    9 mtime    last modify time in seconds since the epoch
+#   10 ctime    inode change time in seconds since the epoch (*)
+
 before '_start' => sub{
     my ($self, $kernel) = @_[OBJECT, KERNEL];
-    $kernel->state('modified_check', $self, '_modified_check');
+    $kernel->state('stat_check', $self, '_stat_check');
 };
+    
+override '_dispatch' => sub{
+    my ($self, $kernel, @params) = @_[OBJECT, KERNEL, ARG0, ARG1];
+    return unless $self->filter->(@params);
 
-override '_file_callback' => sub{
-    my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
-    $kernel->delay(modified_check => $self->modified_interval, $file)
-      unless exists $self->signatures->{"$file"};
+    $kernel->delay(stat_check => $self->stat_interval, 
+		   \@params, [ ( stat($_->[1]) )[7..10] ]
+		  ) 
 };
-
-sub _modified_check{
-    my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
-    return unless  $self->signatures->{"$file"}->is_same;
-    $self->file_callback->($file);
-    delete $self->signatures->{"$file"};
+    
+sub _stat_check{
+    my ($self, $kernel, $params, $stats) = @_[OBJECT, KERNEL, ARG0, ARG1];
+    $kernel->yield(callback => $params) 
+	if $self->cmp->compare($stats, [ ( stat($params->[1]) )[7..10] ]);
 }
+
 
 1;
 
@@ -39,13 +51,14 @@ __END__;
 
 =head1 NAME
 
-POE::Component::DirWatch::Unmodified
+POE::Component::DirWatch::Object::Untouched
 
 =head1 SYNOPSIS
 
-  use POE::Component::DirWatch::Unmodified
+  use POE::Component::DirWatch::Object::Untouched;
 
-  my $watcher = POE::Component::DirWatch::Object::Unmodified->new
+  #$watcher is a PoCo::DW:Object::Untouched 
+  my $watcher = POE::Component::DirWatch::Object::Untouched->new
     (
      alias         => 'dirwatch',
      directory     => '/some_dir',
@@ -59,7 +72,7 @@ POE::Component::DirWatch::Unmodified
 
 =head1 DESCRIPTION
 
-POE::Component::DirWatch::Unmodified extends DirWatch to
+POE::Component::DirWatch::Object::Untouched extends DirWatch::Object in order to 
 exclude files that appear to be in use or are actively being changed.
 
 =head1 Accessors
@@ -68,8 +81,8 @@ exclude files that appear to be in use or are actively being changed.
 
 Read-Write. An integer value that specifies how many seconds to wait in between the
 call to dispatch and the actual dispatch. The interval here serves as a dead period
-in between when the initial stat readings are made and the second reading is made
-(the one that determines whether there was any change or not). Note that the
+in between when the initial stat readings are made and the second reading is made 
+(the one that determines whether there was any change or not). Note that the 
 C<interval> in C<POE::Component::DirWatch::Object> will be delayed by this length.
 See C<_stat_check> for details.
 
@@ -92,7 +105,7 @@ Filtering still happens at this stage.
 
 =head2 _stat_check
 
-Schedule a callback event for every file whose contents have not changed since the
+Schedule a callback event for every file whose contents have not changed since the 
 C<poll> event. After all callbacks are scheduled, set an alarm for the next poll.
 
 ARG0 should be the proper params for C<callback> and ARG1 the original C<stat()>

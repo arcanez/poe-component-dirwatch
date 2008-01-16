@@ -1,13 +1,13 @@
-package POE::Component::DirWatch::TouchedFile;
+package POE::Component::DirWatch::Modified;
 
 use POE;
 use Moose;
 
-our $VERSION = "0.02";
+our $VERSION = "0.001000";
 
-extends 'POE::Component::DirWatch::NewFile';
+extends 'POE::Component::DirWatch::New';
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 override '_file_callback' => sub{
     my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
@@ -19,25 +19,25 @@ override '_file_callback' => sub{
 
 __END__;
 
-#--------#---------#---------#---------#---------#---------#---------#---------#
+#--------#---------#---------#---------#---------#---------#---------#---------
 
 
 =head1 NAME
 
-POE::Component::DirWatch::TouchedFile
+POE::Component::DirWatch::Modified
 
 =head1 DESCRIPTION
 
-POE::Component::DirWatch::TouchedFile extends DirWatch::NewFile in order to
-exclude files that have already been seen, but still pick up files that have been
+POE::Component::DirWatch::TouchedFile extends DirWatch::New in order to exclude
+files that have already been seen, but still pick up files that have been
 changed. Usage is identical to L<POE::Component::DirWatch>.
 
 =head1 METHODS
 
 =head2 _file_callback
 
-C<override '_file_callback'>  Don't call the callback if file has been seen before
-and is unchanged.
+C<override '_file_callback'>  Don't call the callback if file has been seen
+before and is unchanged.
 
 =head2 meta
 

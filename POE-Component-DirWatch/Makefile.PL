@@ -4,9 +4,9 @@
 use inc::Module::Install;
 
 # Define metadata
-name 'POE-Component-DirWatch-Object';
-abstract 'Directory watcher for POE';
-all_from 'lib/POE/Component/DirWatch/Object.pm';
+name 'POE-Component-DirWatch';
+abstract 'Directory Watcher for POE';
+all_from 'lib/POE/Component/DirWatch.pm';
 
 # Specific dependencies
 requires 'Test::More'     => 0;
