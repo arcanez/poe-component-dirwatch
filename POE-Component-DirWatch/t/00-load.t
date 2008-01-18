@@ -1,12 +1,12 @@
-#!perl 
+#!perl
 
 use Test::More tests => 4;
 
 BEGIN {
-    use_ok( 'POE::Component::DirWatch::Object' );
-    use_ok( 'POE::Component::DirWatch::Object::NewFile' );
-    use_ok( 'POE::Component::DirWatch::Object::Touched' );
-    use_ok( 'POE::Component::DirWatch::Object::Untouched' );
+  use_ok( 'POE::Component::DirWatch' );
+  use_ok( 'POE::Component::DirWatch::New' );
+  use_ok( 'POE::Component::DirWatch::Modified' );
+  use_ok( 'POE::Component::DirWatch::Unmodified' );
 }
 
-diag( "Testing POE::Component::DirWatch::Object $POE::Component::DirWatch::Object::VERSION, Perl $], $^X" );
+diag( "Testing POE::Component::DirWatch $POE::Component::DirWatch::VERSION, Perl $], $^X" );

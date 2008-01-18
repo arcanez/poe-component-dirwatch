@@ -1,25 +1,17 @@
-package POE::Component::DirWatch::New;
+package  POE::Component::DirWatch::Role::Signatures;
 
 use POE;
-use Moose;
+use Moose::Role;
 use File::Signature;
 
 our $VERSION = "0.001000";
 
-extends 'POE::Component::DirWatch';
+has signatures =>
+  (is => 'ro', isa => 'HashRef', required => 1, default => sub{{}});
 
-has 'signatures' => (is => 'ro', isa => 'HashRef', default => sub{{}});
-
-#--------#---------#---------#---------#---------#---------#---------#---------
-
-after _file_callback => sub {
-  my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
+after _file_callback => sub{
+  my ($self, $file) = @_[OBJECT, ARG0];
   $self->signatures->{ "$file" } ||= File::Signature->new( "$file" );
-}
-
-override _file_callback => sub {
-    my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
-    $self->file_callback->($file) unless exists $self->signatures->{"$file"};
 };
 
 before _poll => sub{
@@ -33,13 +25,17 @@ __END__;
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
+
 =head1 NAME
 
-POE::Component::DirWatch::New
+POE::Component::DirWatch::Role::Signatures
 
 =head1 DESCRIPTION
 
-POE::Component::DirWatch::New extends DirWatch to exclude previously seen files
+POE::Component::DirWatch::Role::Signatures is a role which provides
+L<File::Signature> functionality to DirWatch-based classes. It will keep a
+hashref of signatures of the files processing to allow you to determine if
+a file has changed.
 
 =head1 ATTRIBUTES
 
@@ -52,8 +48,6 @@ files seen and the value will be a File::Signature object
 
 =head2 file_callback
 
-C<override '_file_callback'>  Don't call the callback if file has been seen.
-
 C<after '_file_callback'> Add the file's signature to C<signatures> if it
 doesnt yet exist.
 
@@ -62,17 +56,13 @@ doesnt yet exist.
 C<before '_poll'> the list of known files is checked and if any of the files no
 longer exist they are removed from the list of known files.
 
-=head2 meta
-
-Keeping tests happy.
-
 =head1 SEE ALSO
 
 L<POE::Component::DirWatch>, L<Moose>
 
 =head1 COPYRIGHT
 
-Copyright 2008 Guillermo Roditi.  All Rights Reserved.  This is
+Copyright 2006-2008 Guillermo Roditi.  All Rights Reserved.  This is
 free software; you may redistribute it and/or modify it under the same
 terms as Perl itself.
 

@@ -1,4 +1,4 @@
-package POE::Component::DirWatch::Unmodified;
+package POE::Component::DirWatch::New;
 
 use POE;
 use Moose;
@@ -10,12 +10,10 @@ with 'POE::Component::DirWatch::Role::Signatures';
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-around '_file_callback' => sub{
+around _file_callback => sub {
   my $orig = shift;
-  my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
-  my $sig = delete $self->signatures->{"$file"};
-  return unless defined $sig && $sig->is_same;
-  $orig->(@_);
+  my ($self, $file) = @_[OBJECT, ARG0];
+  $orig->(@_) unless exists $self->signatures->{"$file"};
 };
 
 __PACKAGE__->meta->make_immutable;
@@ -26,17 +24,13 @@ __END__;
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-
 =head1 NAME
 
-POE::Component::DirWatch::Unmodified
+POE::Component::DirWatch::New
 
 =head1 DESCRIPTION
 
-POE::Component::DirWatch::Unmodified extends DirWatch::New to
-exclude files that appear to be in use or are actively being changed. To
-prevent files from being processed multiple times it is adviced that files
-are moved after successful processing.
+DirWatch::New extends DirWatch to exclude previously seen files.
 
 This module consumes the L<POE::Component::DirWatch::Role::Signatures> role,
 please see it's documentation for information about methods or attributes
@@ -44,12 +38,9 @@ it provides or extends.
 
 =head1 METHODS
 
-=head2 _file_callback
+=head2 file_callback
 
-C<around '_file_callback'> is modified to only execute the callback if the file
-has been seen previously and it's singnature has not changed since the last
-poll. This behavior means that callbacks will not be called until the second
-time they are seen.
+C<around '_file_callback'>  Don't call the callback if file has been seen.
 
 =head2 meta
 

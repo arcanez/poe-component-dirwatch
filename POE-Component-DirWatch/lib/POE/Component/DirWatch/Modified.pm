@@ -5,15 +5,20 @@ use Moose;
 
 our $VERSION = "0.001000";
 
-extends 'POE::Component::DirWatch::New';
+extends 'POE::Component::DirWatch';
+with 'POE::Component::DirWatch::Role::Signatures';
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-override '_file_callback' => sub{
-    my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
-    return if exists $sigs->{"$file"} && $sigs->{"$file"}->is_same;
-    $self->file_callback->($file)
+around '_file_callback' => sub{
+  my $orig = shift;
+  my ($self, $file) = @_[OBJECT, ARG0];
+  my $sigs = $self->signatures;
+  return if exists $sigs->{"$file"} && $sigs->{"$file"}->is_same;
+  $orig->(@_);
 };
+
+__PACKAGE__->meta->make_immutable;
 
 1;
 
@@ -28,9 +33,13 @@ POE::Component::DirWatch::Modified
 
 =head1 DESCRIPTION
 
-POE::Component::DirWatch::TouchedFile extends DirWatch::New in order to exclude
+POE::Component::DirWatch::Modified extends DirWatch::New in order to exclude
 files that have already been seen, but still pick up files that have been
 changed. Usage is identical to L<POE::Component::DirWatch>.
+
+This module consumes the L<POE::Component::DirWatch::Role::Signatures> role,
+please see it's documentation for information about methods or attributes
+it provides or extends.
 
 =head1 METHODS
 
@@ -45,11 +54,11 @@ See L<Moose>
 
 =head1 SEE ALSO
 
-L<POE::Component::DirWatch::NewFile>, L<POE::Component::DirWatch>
+L<POE::Component::DirWatch::New>, L<POE::Component::DirWatch>
 
 =head1 COPYRIGHT
 
-Copyright 2008 Guillermo Roditi.  All Rights Reserved.  This is
+Copyright 2006-2008 Guillermo Roditi.  All Rights Reserved.  This is
 free software; you may redistribute it and/or modify it under the same
 terms as Perl itself.
 

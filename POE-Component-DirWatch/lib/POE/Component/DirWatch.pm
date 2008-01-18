@@ -8,10 +8,9 @@ use MooseX::Types::Path::Class qw/Dir/;
 
 #--------#---------#---------#---------#---------#---------#---------#--------#
 
-has alias => (is => 'rw', isa => 'Str', required => 1, default => 'dirwatch');
-has directory => (is => 'rw', isa => Dir, required => 1, coerce => 1);
-has interval  => (is => 'rw', isa => 'Int', required => 1, default => sub{1});
-
+has alias => (is => 'ro', isa => 'Str', required => 1, default => 'dirwatch');
+has directory => (is => 'rw', isa =>  Dir,  required => 1, coerce => 1);
+has interval  => (is => 'rw', isa => 'Int', required => 1 );
 has next_poll => (
                   is => 'rw', isa => 'Int',
                   clearer   => 'clear_next_poll',
@@ -112,14 +111,23 @@ sub shutdown{
 sub _poll {
     my ($self, $kernel) = @_[OBJECT, KERNEL];
     $self->clear_next_poll;
+
+    #just do this part once perl poll
     my $filter = $self->has_filter ? $self->filter : undef;
+    my $has_dir_cb  = $self->has_dir_callback;
+    my $has_file_cb = $self->has_file_callback;
 
     while (my $child = $self->directory->next) {
-      next if !$child->is_dir && $child->basename =~ /^\.+$/;
-      next if ref $filter && !$filter->($child);
-
-      $child->is_dir ? $kernel->yield(dir_callback => $child)
-        : $kernel->yield(file_callback => $child);
+      if($child->is_dir){
+        next unless $has_dir_cb;
+        next if ref $filter && !$filter->($child);
+        $kernel->yield(dir_callback => $child);
+      } else {
+        next unless $has_file_cb;
+        next if $child->basename =~ /^\.+$/;
+        next if ref $filter && !$filter->($child);
+         $kernel->yield(file_callback => $child);
+      }
     }
 
     $self->next_poll( $kernel->delay_set(poll => $self->interval) );
@@ -149,29 +157,27 @@ sub _shutdown {
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-1;
+__PACKAGE__->meta->make_immutable;
 
-__PACKAGE__->make_immutable;
+1;
 
 __END__;
 
 =head1 NAME
 
-POE::Component::DirWatch::Object - POE directory watcher object
+POE::Component::DirWatch - POE directory watcher
 
 =head1 SYNOPSIS
 
-  use POE::Component::DirWatch::Object;
+  use POE::Component::DirWatch;
 
-  #$watcher is a PoCo::DW:Object
-  my $watcher = POE::Component::DirWatch::Object->new
+  my $watcher = POE::Component::DirWatch->new
     (
      alias      => 'dirwatch',
      directory  => '/some_dir',
-     filter     => sub { $_[0] =~ /\.gz$/ && -f $_[1] },
-     callback   => \&some_sub,
-     # OR
-     callback   => [$obj, 'some_sub'], #if you want $obj->some_sub
+     filter     => sub { $_[0]->is_file ? $_[0] =~ /\.gz$/ : 1 },
+     dir_callback  => sub{ ... },
+     file_callback => sub{ ... },
      interval   => 1,
     );
 
@@ -183,11 +189,88 @@ POE::Component::DirWatch watches a directory for files or directories.
 Upon finding either it will invoke a user-supplied callback function
 depending on whether the item is a file or directory.
 
-=head1 Public Methods
+=head1 ATTRIBUTES
+
+=head2 alias
+
+Read only alias for the DirWatch session.  Defaults to C<dirwatch> if not
+specified. You can NOT rename a session at runtime.
+
+=head2 directory
+
+Read-write, required. A L<Path::Class::Dir> object for the directory watched.
+Automatically coerces strings into L<Path::Class::Dir> objects.
+
+=head2 interval
+
+Required read-write integer representing interval between the end of a poll
+event and the scheduled start of the next. Defaults to 1.
+
+=head2 file_callback
+
+=over 4
+
+=item b<has_file_callback> - predicate
+
+=item b<clear_file_callback> - clearer
+
+=back
+
+Optional read-write code reference to call when a file is found. The code
+reference will passed a single argument, a L<Path::Class::File> object
+representing the file found. It usually makes most sense to process the file
+and remove it from the directory to avoid duplicate processing
+
+=head2 dir_callback
+
+=over 4
+
+=item b<has_dir_callback> - predicate
+
+=item b<clear_dir_callback> - clearer
+
+=back
+
+Optional read-write code reference to call when a directory is found. The code
+reference will passed a single argument, a L<Path::Class::Dir> object
+representing the directory found.
+
+=head2 filter
+
+=over 4
+
+=item b<has_filter> - predicate
+
+=item b<clear_filter> - clearer
+
+=back
+
+An optional read-write code reference that, if present, will be called for each
+item in the watched directory. The code reference will passed a single
+argument, a L<Path::Class::File> or L<Path::Class::Dir> object representing
+the file/dir found. The code should return true if the callback should be
+called and false if the file should be ignored.
+
+=head2 next_poll
+
+=over 4
+
+=item b<has_next_poll> - predicate
+
+=item b<clear_next_poll> - clearer
+
+=back
+
+The ID of the alarm for the next scheduled poll, if any. Has clearer
+and predicate methods named C<clear_next_poll> and C<has_next_poll>.
+Please note that clearing the C<next_poll> just clears the next poll id,
+it does not remove the alarm, please use C<pause> for that.
+
+=head1 OBJECT METHODS
 
 =head2 new( \%attrs)
 
-  See SYNOPSIS and Accessors / Attributes below.
+  See SYNOPSIS and ATTRIBUTES.
 
 =head2 session
 
@@ -199,116 +282,40 @@ object reference around could create a problem with lingering references.
 =head2 pause [$until]
 
 Synchronous call to _pause. This just posts an immediate _pause event to the
-kernel. Safe for use outside of POEish land (doesnt use @_[KERNEL, ARG0...])
+kernel.
 
 =head2 resume [$when]
 
 Synchronous call to _resume. This just posts an immediate _resume event to the
-kernel. Safe for use outside of POEish land (doesnt use @_[KERNEL, ARG0...])
+kernel.
 
 =head2 shutdown
 
 Convenience method that posts a FIFO shutdown event.
 
-=head1 Accessors / Attributes
+=head2 meta
 
-=head2 alias
+See L<Moose>;
 
-The alias for the DirWatch session.  Defaults to C<dirwatch> if not
-specified. You can NOT rename a session at runtime.
+=head1 EVENT HANDLING METHODS
 
-=head2 directory
-
-This is a required argument during C<new>.
-The path of the directory to watch.
-
-=head2 interval
-
-The interval waited between the end of a directory poll and the start of
-another. Default to 1 if not specified.
-
-WARNING: This is number NOT the interval between polls. A lengthy blocking
-callback, high-loads, or slow applications may delay the time between polls.
-You can see: L<http://poe.perl.org/?POE_Cookbook/Recurring_Alarms> for more
-info.
-
-=head2 callback
-
-This is a required argument during C<new>.
-The code to be called when a matching file is found.
-
-The code called will be passed 2 arguments, the $filename and $filepath.
-This may take 2 different values. A 2 element arrayref or a single coderef.
-When given an arrayref the first item will be treated as an object and the
-second as a method name. See the SYNOPSYS.
-
-It usually makes most sense to process the file and remove it from the
-directory.
-
-    #Example
-    callback => sub{ my($filename, $fullpath) = @_ }
-    # OR
-    callback => [$obj, 'mymethod']
-
-    #Where my method looks like:
-    sub mymethod {
-        my ($self, $filename, $fullpath) = @_;
-    ...
-
-=head2 filter
-
-A reference to a subroutine that will be called for each file
-in the watched directory. It should return a TRUE value if
-the file qualifies as found, FALSE if the file is to be
-ignored.
-
-This subroutine is called with two arguments: the name of the
-file, and its full pathname.
-
-If not specified, defaults to C<sub { -f $_[1] }>.
-
-=head2 next_poll
-
-The ID of the alarm for the next scheduled poll, if any. Has clearer
-and predicate methods named C<clear_next_poll> and C<has_next_poll>.
-Please note that clearing the C<next_poll> just clears the next poll id,
-it does not remove the alarm, please use C<pause> for that.
-
-=head1 Private methods
-
-These methods are documented here just in case you subclass. Please
-do not call them directly. If you are wondering why some are needed it is so
-Moose's C<before> and C<after> work.
+These methods are not part of the public interface of this class, and expect
+to be called from whithin POE with the standard positional arguments.
+Use them at your own risk.
 
 =head2 _start
 
-Runs when C<$poe_kernel-E<gt>run> is called. It will create a new DirHandle
-watching to C<$watcher-E<gt>directory>, set the session's alias and schedule
-the first C<poll> event.
+Runs when C<$poe_kernel-E<gt>run> is called to set the session's alias and
+schedule the first C<poll> event.
 
 =head2 _poll
 
 Triggered by the C<poll> event this is the re-occurring action. _poll will use
-get a list of all files in the directory and call C<_aio_callback> with the
-list of filenames (if any)
+get a list of all items in the directory and call the appropriate callback.
 
-I promise I will make this async soon, it's just that IO::AIO doesnt work on
-FreeBSD.
+=head2 _file_callback
 
-=head2 _aio_callback
-
-Schedule the next poll and dispatch any files found.
-
-=head2 _dispatch
-
-Triggered by the C<dispatch> event, it recieves a filename in ARG0, it then
-proceeds to run the file through the filter and schedule a callback.
-
-=head2 _callback
-
-Triggered by the C<callback> event, it  derefernces the argument list that is
-passed to it in ARG0 and calls the appropriate coderef or object-method pair
-with $filename and $fullpath in @_;
+Will execute the C<file_callback> code reference, if any.
 
 =head2 _pause [$until]
 
@@ -345,12 +352,7 @@ Delete the C<heap>, remove the alias we are using and remove all set alarms.
 
 =head2 BUILD
 
-Constructor. C<create()>s a L<POE::Session> and stores it in
-C<$self-E<gt>session>.
-
-=head2 meta
-
-See L<Moose>
+Constructor. C<create()>s a L<POE::Session>.
 
 =head1 TODO
 
@@ -359,6 +361,8 @@ See L<Moose>
 =item More examples
 
 =item More tests
+
+=item Add a subclass that uses L<POE::Component::AIO>
 
 =back
 
@@ -396,7 +400,7 @@ your bug as I make changes.
 
 =head1 COPYRIGHT
 
-Copyright 2006 Guillermo Roditi.  All Rights Reserved.  This is
+Copyright 2006-2008 Guillermo Roditi.  All Rights Reserved.  This is
 free software; you may redistribute it and/or modify it under the same
 terms as Perl itself.
 
