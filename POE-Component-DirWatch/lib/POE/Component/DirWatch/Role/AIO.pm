@@ -1,10 +1,12 @@
 package POE::Component::DirWatch::Role::AIO;
 
+our $VERSION = "0.001000";
+
 use POE;
 use IO::AIO qw/2/;
 use POE::Component::AIO { no_auto_export => 1, no_auto_bootstrap => 1 };
 use Moose::Role;
-use Path::Class;
+use Path::Class (file dir);
 
 has aio => (is => 'ro', isa => 'POE::Component::AIO', required => 1,
             clearer => 'clear_aio',
@@ -17,14 +19,14 @@ after _start => sub {
     my $filter = $self->has_filter ? $self->filter : undef;
     if( $self->has_dir_callback ){
       foreach my $child (@$dirs){
-        $child = Path::Class::Dir->new($self->directory, $child);
+        $child = dir($self->directory, $child);
         next if ref $filter && !$filter->($child);
         $kernel->yield(dir_callback => $child);
       }
     }
     if( $self->has_file_callback ){
       foreach my $child (@$nondirs){
-        $child = Path::Class::File->new($self->directory, $child);
+        $child = file($self->directory, $child);
         next if ref $filter && !$filter->($child);
         $poe_kernel->yield(file_callback => $child);
       }
