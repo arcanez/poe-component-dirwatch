@@ -31,7 +31,7 @@ sub _tstart {
 
   $kernel->alias_set("CharlieCard");
   # create a test directory with some test files
-  rmtree "$DIR";
+  File::Path::rmtree("$DIR");
   mkdir("$DIR", 0755) or die "can't create $DIR: $!\n";
   for my $file (keys %FILES) {
     my $path = file($DIR, $file);
@@ -49,29 +49,27 @@ sub _tstart {
 }
 
 sub _tstop{
-    my $heap = $_[HEAP];
-    ok(rmtree "$DIR", 'Proper cleanup detected');
+  ok(File::Path::rmtree("$DIR"), 'Proper cleanup detected');
 }
 
 sub file_found{
-    my ($file, $pathname) = @_;
-    ok(exists $FILES{$file->basename}, 'correct file');
-    ++$seen{$file->basename};
+  my ($file, $pathname) = @_;
+  ok(exists $FILES{$file->basename}, 'correct file');
+  ++$seen{$file->basename};
 
-    if(++$state == (keys %FILES) ){
-        my $path = file($DIR, 'foo');
-        utime time, time, $path;
-        ok(1, 'Touching $path');
-    } elsif ($state == (keys %FILES) + 1 ) {
-        is_deeply(\%FILES, \%seen, 'seen all files');
-        ok($seen{foo} == 2," Picked up edited file");
-        $poe_kernel->state("endtest",  sub{ $_[KERNEL]->post(CharlieCard => '_endtest') });
-        $poe_kernel->delay("endtest", 5);
-    } elsif ($state > (keys %FILES) + 1 ) {
-        rmtree $DIR;
-        die "We seem to be looping, bailing out\n";
+  if(++$state == (keys %FILES) ){
+    my $path = file($DIR, 'foo');
+    utime time, time, $path;
+    ok(1, 'Touching $path');
+  } elsif ($state == (keys %FILES) + 1 ) {
+    is_deeply(\%FILES, \%seen, 'seen all files');
+    ok($seen{foo} == 2," Picked up edited file");
+    $poe_kernel->state("endtest",  sub{ $_[KERNEL]->post(CharlieCard => '_endtest') });
+    $poe_kernel->delay("endtest", 3);
+  } elsif ($state > (keys %FILES) + 1 ) {
+    File::Path::rmtree("$DIR");
+    die "We seem to be looping, bailing out\n";
     }
-
 }
 
 __END__

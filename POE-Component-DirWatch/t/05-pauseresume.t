@@ -4,7 +4,7 @@ use strict;
 
 use POE;
 use FindBin     qw($Bin);
-use File::Path  qw(rmtree);
+use File::Path;
 use Path::Class qw/dir file/;
 use Test::More  tests => 5;
 use Time::HiRes;
@@ -34,7 +34,7 @@ sub _tstart {
 
   $kernel->alias_set("CharlieCard");
   # create a test directory with some test files
-  rmtree "$DIR";
+  File::Path::rmtree("$DIR");
   mkdir("$DIR", 0755) or die "can't create $DIR: $!\n";
   for my $file (keys %FILES) {
     my $path = file($DIR, $file);
@@ -52,32 +52,31 @@ sub _tstart {
 }
 
 sub _tstop{
-    my $heap = $_[HEAP];
-    ok(rmtree "$DIR", 'Proper cleanup detected');
+  ok(File::Path::rmtree("$DIR"), 'Proper cleanup detected');
 }
 
 my $time;
 sub file_found{
-    if(++$state == 1){
-        $time = time + 3;
-        $poe_kernel->post(dirwatch_test => '_pause', $time);
-    } elsif($state == 2){
-        ok($time <= time, "Pause Until Works");
-        $time = time + 3;
-        $poe_kernel->post(dirwatch_test => '_pause');
+  if(++$state == 1){
+    $time = time + 3;
+    $poe_kernel->post(dirwatch_test => '_pause', $time);
+  } elsif($state == 2){
+    ok($time <= time, "Pause Until Works");
+    $time = time + 3;
+    $poe_kernel->post(dirwatch_test => '_pause');
         $poe_kernel->post(dirwatch_test => '_resume',$time);
-    } elsif($state == 3){
-        ok($time <= time, "Pause - Resume When Works");
-        $time = time + 3;
-        $poe_kernel->post(dirwatch_test => '_pause');
-        $poe_kernel->post(dirwatch_test => '_resume',$time);
-    } elsif($state == 4){
-        ok($time <= time, "Resume When Works");
-        $poe_kernel->post(dirwatch_test => 'shutdown');
-    } else {
-        rmtree $DIR;
-        die "Something is wrong, bailing out!\n";
-    }
+  } elsif($state == 3){
+    ok($time <= time, "Pause - Resume When Works");
+    $time = time + 3;
+    $poe_kernel->post(dirwatch_test => '_pause');
+    $poe_kernel->post(dirwatch_test => '_resume',$time);
+  } elsif($state == 4){
+    ok($time <= time, "Resume When Works");
+    $poe_kernel->post(dirwatch_test => 'shutdown');
+  } else {
+    File::Path::rmtree("$DIR");
+    die "Something is wrong, bailing out!\n";
+  }
 }
 
 __END__

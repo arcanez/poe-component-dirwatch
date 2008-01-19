@@ -3,8 +3,8 @@
 use strict;
 
 use POE;
-use FindBin     qw($Bin);
-use File::Path  qw(rmtree);
+use FindBin qw($Bin);
+use File::Path;
 use Path::Class qw/dir file/;
 use Test::More  tests => 6;
 use POE::Component::DirWatch;
@@ -22,7 +22,6 @@ POE::Session->create(
      },
     );
 
-
 $poe_kernel->run();
 ok(1, 'Proper shutdown detected');
 
@@ -31,7 +30,7 @@ exit 0;
 sub _tstart {
   my ($kernel, $heap) = @_[KERNEL, HEAP];
   # create a test directory with some test files
-  rmtree "$DIR";
+  File::Path::rmtree("$DIR");
   mkdir("$DIR", 0755) or die "can't create $DIR: $!\n";
   for my $file (keys %FILES) {
     my $path = file($DIR, $file);
@@ -49,7 +48,7 @@ sub _tstart {
       is_deeply(\%FILES, \%seen, 'seen all files');
       $poe_kernel->call(dirwatch_test => 'shutdown');
     } elsif ($state > keys %FILES) {
-      rmtree "$DIR";
+      File::Path::rmtree("$DIR");
       die "We seem to be looping, bailing out\n";
     }
   };
@@ -66,8 +65,7 @@ sub _tstart {
 }
 
 sub _tstop{
-    my $heap = $_[HEAP];
-    ok(rmtree "$DIR", 'Proper cleanup detected');
+  ok(File::Path::rmtree("$DIR"), 'Proper cleanup detected');
 }
 
 __END__

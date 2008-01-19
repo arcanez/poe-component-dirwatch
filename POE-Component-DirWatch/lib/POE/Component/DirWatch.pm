@@ -4,7 +4,19 @@ our $VERSION = "0.100000";
 
 use POE;
 use Moose;
+use Class::MOP;
 use MooseX::Types::Path::Class qw/Dir/;
+
+sub import {
+  my ($class, %args) = @_;
+  return if delete $args{no_aio};
+  return unless Class::MOP::load_class("POE::Component::AIO");
+  if (Class::MOP::load_class("POE::Component::DirWatch::Role::AIO")){
+    $class->meta->make_mutable;
+    POE::Component::DirWatch::Role::AIO->meta->apply($class->meta);
+    $class->meta->make_immutable;
+  }
+}
 
 #--------#---------#---------#---------#---------#---------#---------#--------#
 
@@ -38,20 +50,20 @@ has file_callback => (
 sub BUILD{
   my ($self, $args) = @_;
   POE::Session->create
-    (
-     object_states =>
-     [ $self,
-       {
-        _start   => '_start',
-        _pause   => '_pause',
-        _resume  => '_resume',
-        shutdown => '_shutdown',
-        poll     => '_poll',
-        ($self->has_dir_callback  ? (dir_callback  => '_dir_callback')  : () ),
-        ($self->has_file_callback ? (file_callback => '_file_callback') : () ),
-       },
-     ]
-    );
+      (
+       object_states =>
+       [ $self,
+         {
+          _start   => '_start',
+          _pause   => '_pause',
+          _resume  => '_resume',
+          shutdown => '_shutdown',
+          poll     => '_poll',
+          ($self->has_dir_callback  ? (dir_callback  => '_dir_callback')  : () ),
+          ($self->has_file_callback ? (file_callback => '_file_callback') : () ),
+         },
+       ]
+      );
 }
 
 sub session{ $poe_kernel->alias_resolve( shift->alias ) }
@@ -59,100 +71,100 @@ sub session{ $poe_kernel->alias_resolve( shift->alias ) }
 #--------#---------#---------#---------#---------#---------#---------#---------
 
 sub _start{
-    my ($self, $kernel) = @_[OBJECT, KERNEL];
-    $kernel->alias_set($self->alias); # set alias for ourselves and remember it
-    $self->next_poll( $kernel->delay_set(poll => $self->interval) );
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  $kernel->alias_set($self->alias); # set alias for ourselves and remember it
+  $self->next_poll( $kernel->delay_set(poll => $self->interval) );
 }
 
 sub _pause{
-    my ($self, $kernel, $until) = @_[OBJECT, KERNEL, ARG0];
-    $kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
-    $self->clear_next_poll;
-    return unless defined $until;
+  my ($self, $kernel, $until) = @_[OBJECT, KERNEL, ARG0];
+  $kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
+  $self->clear_next_poll;
+  return unless defined $until;
 
-    my $t = time;
-    $until += $t if $t > $until;
-    $self->next_poll( $kernel->alarm_set(poll => $until) );
+  my $t = time;
+  $until += $t if $t > $until;
+  $self->next_poll( $kernel->alarm_set(poll => $until) );
 
 }
 
 sub _resume{
-    my ($self, $kernel, $when) = @_[OBJECT, KERNEL, ARG0];
-    $kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
-    $self->clear_next_poll;
-    $when = 0 unless defined $when;
+  my ($self, $kernel, $when) = @_[OBJECT, KERNEL, ARG0];
+  $kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
+  $self->clear_next_poll;
+  $when = 0 unless defined $when;
 
-    my $t = time;
-    $when += $t if $t > $when;
-    $self->next_poll( $kernel->alarm_set(poll => $when) );
+  my $t = time;
+  $when += $t if $t > $when;
+  $self->next_poll( $kernel->alarm_set(poll => $when) );
 }
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
 sub pause{
-    my ($self, $until) = @_;
-    $poe_kernel->call($self->alias, _pause => $until);
+  my ($self, $until) = @_;
+  $poe_kernel->call($self->alias, _pause => $until);
 }
 
 sub resume{
-    my ($self, $when) = @_;
-    $poe_kernel->call($self->alias, _resume => $when);
+  my ($self, $when) = @_;
+  $poe_kernel->call($self->alias, _resume => $when);
 }
 
 sub shutdown{
-    my ($self) = @_;
-    $poe_kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
-    $self->clear_next_poll;
-    $poe_kernel->post($self->alias, 'shutdown');
+  my ($self) = @_;
+  $poe_kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
+  $self->clear_next_poll;
+  $poe_kernel->post($self->alias, 'shutdown');
 }
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
 sub _poll {
-    my ($self, $kernel) = @_[OBJECT, KERNEL];
-    $self->clear_next_poll;
+  my ($self, $kernel) = @_[OBJECT, KERNEL];
+  $self->clear_next_poll;
 
-    #just do this part once perl poll
-    my $filter = $self->has_filter ? $self->filter : undef;
-    my $has_dir_cb  = $self->has_dir_callback;
-    my $has_file_cb = $self->has_file_callback;
+  #just do this part once perl poll
+  my $filter = $self->has_filter ? $self->filter : undef;
+  my $has_dir_cb  = $self->has_dir_callback;
+  my $has_file_cb = $self->has_file_callback;
 
-    while (my $child = $self->directory->next) {
-      if($child->is_dir){
-        next unless $has_dir_cb;
-        next if ref $filter && !$filter->($child);
-        $kernel->yield(dir_callback => $child);
-      } else {
-        next unless $has_file_cb;
-        next if $child->basename =~ /^\.+$/;
-        next if ref $filter && !$filter->($child);
-         $kernel->yield(file_callback => $child);
-      }
+  while (my $child = $self->directory->next) {
+    if($child->is_dir){
+      next unless $has_dir_cb;
+      next if ref $filter && !$filter->($child);
+      $kernel->yield(dir_callback => $child);
+    } else {
+      next unless $has_file_cb;
+      next if $child->basename =~ /^\.+$/;
+      next if ref $filter && !$filter->($child);
+      $kernel->yield(file_callback => $child);
     }
+  }
 
-    $self->next_poll( $kernel->delay_set(poll => $self->interval) );
+  $self->next_poll( $kernel->delay_set(poll => $self->interval) );
 }
 
 #these are only here so allow method modifiers to hook into them
 #these are prime candidates for inlining when the class is made immutable
 sub _file_callback {
-    my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
-    $self->file_callback->($file);
+  my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
+  $self->file_callback->($file);
 }
 
 sub _dir_callback {
-    my ($self, $kernel, $dir) = @_[OBJECT, KERNEL, ARG0];
-    $self->dir_callback->($dir);
+  my ($self, $kernel, $dir) = @_[OBJECT, KERNEL, ARG0];
+  $self->dir_callback->($dir);
 }
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
 sub _shutdown {
-    my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
-    #cleaup heap, alias, alarms (no lingering refs n ish)
-    %$heap = ();
-    $kernel->alias_remove($self->alias);
-    $kernel->alarm_remove_all();
+  my ($self, $kernel, $heap) = @_[OBJECT, KERNEL, HEAP];
+  #cleaup heap, alias, alarms (no lingering refs n ish)
+  %$heap = ();
+  $kernel->alias_remove($self->alias);
+  $kernel->alarm_remove_all();
 }
 
 #--------#---------#---------#---------#---------#---------#---------#---------
@@ -188,6 +200,17 @@ POE::Component::DirWatch - POE directory watcher
 POE::Component::DirWatch watches a directory for files or directories.
 Upon finding either it will invoke a user-supplied callback function
 depending on whether the item is a file or directory.
+
+=head1 ASYNCHRONOUS IO SUPPORT
+
+This object supports asynchronous IO access using L<IO::AIO>. At load time,
+the class will detect whether IO::AIO is present in the host system and, if it
+is present, apply the L<POE::Component::DirWatch::Role::AIO> role to the
+current class, adding the C<aio> attribute, the <aio_callback> event, and
+replacing C<_poll> with an asynchronous version. If you do not wish to use AIO
+you can specify so with he C<no_aio> flag like this:
+
+    use POE::Component::DirWatch (no_aio => 1);
 
 =head1 ATTRIBUTES
 
