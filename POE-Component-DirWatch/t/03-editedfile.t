@@ -35,7 +35,7 @@ sub _tstart {
   mkdir("$DIR", 0755) or die "can't create $DIR: $!\n";
   for my $file (keys %FILES) {
     my $path = file($DIR, $file);
-    open FH, ">$path" or die "can't create $path: $!\n";
+    open FH, ">$path" or die "Can't create $path: $!\n";
     close FH;
   }
 
@@ -53,14 +53,14 @@ sub _tstop{
 }
 
 sub file_found{
-  my ($file, $pathname) = @_;
+  my ($file) = @_;
   ok(exists $FILES{$file->basename}, 'correct file');
   ++$seen{$file->basename};
 
   if(++$state == (keys %FILES) ){
     my $path = file($DIR, 'foo');
-    utime time, time, $path;
-    ok(1, 'Touching $path');
+    utime undef, undef, $path->stringify;
+    ok(1, "Touching $path ");
   } elsif ($state == (keys %FILES) + 1 ) {
     is_deeply(\%FILES, \%seen, 'seen all files');
     ok($seen{foo} == 2," Picked up edited file");
