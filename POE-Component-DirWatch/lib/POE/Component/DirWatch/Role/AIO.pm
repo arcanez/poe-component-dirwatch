@@ -6,7 +6,7 @@ use POE;
 use IO::AIO qw/2/;
 use POE::Component::AIO { no_auto_export => 1, no_auto_bootstrap => 1 };
 use Moose::Role;
-use Path::Class (file dir);
+use Path::Class qw(file dir);
 
 has aio => (is => 'ro', isa => 'POE::Component::AIO', required => 1,
             clearer => 'clear_aio',

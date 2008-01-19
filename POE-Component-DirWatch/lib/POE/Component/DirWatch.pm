@@ -1,6 +1,6 @@
 package POE::Component::DirWatch;
 
-our $VERSION = "0.100000_01";
+our $VERSION = "0.100000_02";
 
 use POE;
 use Moose;
@@ -10,8 +10,8 @@ use MooseX::Types::Path::Class qw/Dir/;
 sub import {
   my ($class, %args) = @_;
   return if delete $args{no_aio};
-  return unless Class::MOP::load_class("POE::Component::AIO");
-  if (Class::MOP::load_class("POE::Component::DirWatch::Role::AIO")){
+  return unless eval { Class::MOP::load_class("POE::Component::AIO") };
+  if (eval { Class::MOP::load_class("POE::Component::DirWatch::Role::AIO") }){
     $class->meta->make_mutable;
     POE::Component::DirWatch::Role::AIO->meta->apply($class->meta);
     $class->meta->make_immutable;

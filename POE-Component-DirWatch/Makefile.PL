@@ -16,6 +16,9 @@ requires 'Path::Class'     => 0;
 requires 'File::Signature' => 0;
 requires 'MooseX::Types::Path::Class' => 0;
 
+#recommended (for performance)
+recommends 'POE::Component::AIO' => '1.00';
+
 build_requires 'Test::More' => 0;
 
 auto_install;
