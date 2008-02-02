@@ -1,6 +1,6 @@
 package POE::Component::DirWatch;
 
-our $VERSION = "0.100000_02";
+our $VERSION = "0.100000_03";
 
 use POE;
 use Moose;
@@ -16,6 +16,7 @@ sub import {
     POE::Component::DirWatch::Role::AIO->meta->apply($class->meta);
     $class->meta->make_immutable;
   }
+  return;
 }
 
 #--------#---------#---------#---------#---------#---------#---------#--------#
