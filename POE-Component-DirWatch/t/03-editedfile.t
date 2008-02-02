@@ -49,6 +49,9 @@ sub _tstart {
      file_callback  => \&file_found,
      interval   => 1,
     );
+
+  diag("Not using AIO extension.") unless
+    $watcher->does('POE::Component::DirWatch::Role::AIO');
 }
 
 sub _tstop{
