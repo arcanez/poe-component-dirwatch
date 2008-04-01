@@ -1,6 +1,6 @@
 package POE::Component::DirWatch;
 
-our $VERSION = "0.100000_03";
+our $VERSION = "0.100000";
 
 use POE;
 use Moose;
@@ -422,6 +422,8 @@ your bug as I make changes.
 =item Charles Reiss
 
 =item Stevan Little
+
+=item Eric Cholet
 
 =back
 

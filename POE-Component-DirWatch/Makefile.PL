@@ -21,5 +21,4 @@ recommends 'POE::Component::AIO' => '1.00';
 
 build_requires 'Test::More' => 0;
 
-auto_install;
 WriteAll;
