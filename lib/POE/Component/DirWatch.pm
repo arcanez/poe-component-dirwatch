@@ -125,7 +125,7 @@ sub _poll {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   $self->clear_next_poll;
 
-  #just do this part once perl poll
+  #just do this part once per poll
   my $filter = $self->has_filter ? $self->filter : undef;
   my $has_dir_cb  = $self->has_dir_callback;
   my $has_file_cb = $self->has_file_callback;
