@@ -34,7 +34,7 @@ POE::Component::DirWatch::New
 DirWatch::New extends DirWatch to exclude previously seen files.
 
 This module consumes the L<POE::Component::DirWatch::Role::Signatures> role,
-please see it's documentation for information about methods or attributes
+please see its documentation for information about methods or attributes
 it provides or extends.
 
 =head1 METHODS

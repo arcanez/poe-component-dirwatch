@@ -38,7 +38,7 @@ files that have already been seen, but still pick up files that have been
 changed. Usage is identical to L<POE::Component::DirWatch>.
 
 This module consumes the L<POE::Component::DirWatch::Role::Signatures> role,
-please see it's documentation for information about methods or attributes
+please see its documentation for information about methods or attributes
 it provides or extends.
 
 =head1 METHODS
