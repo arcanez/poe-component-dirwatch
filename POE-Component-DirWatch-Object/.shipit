@@ -1,6 +1,0 @@
-# auto-generated shipit config file.
-steps = FindVersion, ChangeVersion, CheckChangeLog, DistTest, Commit, Tag, MakeDist
-
-svk.tagpattern = POE-Component-DirWatch-Object-%v
-
-# CheckChangeLog.files = ChangeLog, MyProj.CHANGES
