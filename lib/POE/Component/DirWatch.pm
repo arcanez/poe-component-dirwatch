@@ -21,63 +21,83 @@ sub import {
 
 #--------#---------#---------#---------#---------#---------#---------#--------#
 
-has alias => (is => 'ro', isa => 'Str', required => 1, default => 'dirwatch');
-has directory => (is => 'rw', isa =>  Dir,  required => 1, coerce => 1);
-has interval  => (is => 'rw', isa => 'Int', required => 1 );
-has next_poll => (
-                  is => 'rw', isa => 'Int',
-                  clearer   => 'clear_next_poll',
-                  predicate => 'has_next_poll'
-                 );
+has alias => (
+  is => 'ro',
+  isa => 'Str',
+  required => 1,
+  default => 'dirwatch'
+);
 
-has filter    => (
-                  is => 'rw', isa => 'CodeRef',
-                  clearer   => 'clear_filter',
-                  predicate => 'has_filter'
-                 );
+has directory => (
+  is => 'rw',
+  isa => Dir,
+  required => 1,
+  coerce => 1
+);
+
+has interval => (
+  is => 'rw',
+  isa => 'Int',
+  required => 1
+);
+
+has next_poll => (
+  is => 'rw',
+  isa => 'Int',
+  clearer => 'clear_next_poll',
+  predicate => 'has_next_poll'
+);
+
+has filter => (
+  is => 'rw',
+  isa => 'CodeRef',
+  clearer => 'clear_filter',
+  predicate => 'has_filter'
+);
 
 has dir_callback  => (
-                      is => 'rw', isa => 'Ref',
-                      clearer   => 'clear_dir_callback',
-                      predicate => 'has_dir_callback'
-                     );
+  is => 'rw',
+  isa => 'Ref',
+  clearer => 'clear_dir_callback',
+  predicate => 'has_dir_callback'
+);
 
 has file_callback => (
-                      is => 'rw', isa => 'Ref',
-                      clearer   => 'clear_file_callback',
-                      predicate => 'has_file_callback'
-                     );
+  is => 'rw',
+  isa => 'Ref',
+  clearer => 'clear_file_callback',
+  predicate => 'has_file_callback'
+);
 
-sub BUILD{
+sub BUILD {
   my ($self, $args) = @_;
-  POE::Session->create
-      (
-       object_states =>
-       [ $self,
-         {
-          _start   => '_start',
-          _pause   => '_pause',
-          _resume  => '_resume',
-          shutdown => '_shutdown',
-          poll     => '_poll',
-          ($self->has_dir_callback  ? (dir_callback  => '_dir_callback')  : () ),
-          ($self->has_file_callback ? (file_callback => '_file_callback') : () ),
-         },
-       ]
-      );
+  POE::Session->create(
+    object_states => [
+      $self,
+      {
+        _start   => '_start',
+        _pause   => '_pause',
+        _resume  => '_resume',
+        shutdown => '_shutdown',
+        poll     => '_poll',
+        ($self->has_dir_callback  ? (dir_callback  => '_dir_callback')  : () ),
+        ($self->has_file_callback ? (file_callback => '_file_callback') : () ),
+      },
+    ]
+  );
 }
 
-sub session{ $poe_kernel->alias_resolve( shift->alias ) }
+sub session { $poe_kernel->alias_resolve( shift->alias ) }
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-sub _start{
+sub _start {
   my ($self, $kernel) = @_[OBJECT, KERNEL];
   $kernel->alias_set($self->alias); # set alias for ourselves and remember it
   $self->next_poll( $kernel->delay_set(poll => $self->interval) );
 }
 
-sub _pause{
+sub _pause {
   my ($self, $kernel, $until) = @_[OBJECT, KERNEL, ARG0];
   $kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
   $self->clear_next_poll;
@@ -89,7 +109,7 @@ sub _pause{
 
 }
 
-sub _resume{
+sub _resume {
   my ($self, $kernel, $when) = @_[OBJECT, KERNEL, ARG0];
   $kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
   $self->clear_next_poll;
@@ -102,17 +122,17 @@ sub _resume{
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-sub pause{
+sub pause {
   my ($self, $until) = @_;
   $poe_kernel->call($self->alias, _pause => $until);
 }
 
-sub resume{
+sub resume {
   my ($self, $when) = @_;
   $poe_kernel->call($self->alias, _resume => $when);
 }
 
-sub shutdown{
+sub shutdown {
   my ($self) = @_;
   $poe_kernel->alarm_remove($self->next_poll) if $self->has_next_poll;
   $self->clear_next_poll;

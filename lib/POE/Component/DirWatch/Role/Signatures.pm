@@ -1,4 +1,4 @@
-package  POE::Component::DirWatch::Role::Signatures;
+package POE::Component::DirWatch::Role::Signatures;
 
 use POE;
 use Moose::Role;
@@ -6,15 +6,19 @@ use File::Signature;
 
 our $VERSION = "0.001000";
 
-has signatures =>
-  (is => 'ro', isa => 'HashRef', required => 1, default => sub{{}});
+has signatures => (
+  is => 'ro',
+  isa => 'HashRef',
+  required => 1,
+  default => sub { {} }
+);
 
-after _file_callback => sub{
+after _file_callback => sub {
   my ($self, $file) = @_[OBJECT, ARG0];
   $self->signatures->{ "$file" } ||= File::Signature->new( "$file" );
 };
 
-before _poll => sub{
+before _poll => sub {
   my $sigs = shift->signatures;
   delete($sigs->{$_}) for grep {! -e $_ } keys %$sigs;
 };

@@ -10,7 +10,7 @@ with 'POE::Component::DirWatch::Role::Signatures';
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-around '_file_callback' => sub{
+around '_file_callback' => sub {
   my $orig = shift;
   my ($self, $file) = @_[OBJECT, ARG0];
   my $sigs = $self->signatures;

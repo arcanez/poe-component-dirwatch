@@ -8,13 +8,17 @@ use POE::Component::AIO { no_auto_export => 1, no_auto_bootstrap => 1 };
 use Moose::Role;
 use Path::Class qw(file dir);
 
-has aio => (is => 'ro', isa => 'POE::Component::AIO', required => 1,
-            clearer => 'clear_aio',
-            default => sub{ POE::Component::AIO->new } );
+has aio => (
+  is => 'ro',
+  isa => 'POE::Component::AIO',
+  required => 1,
+  clearer => 'clear_aio',
+  default => sub { POE::Component::AIO->new }
+);
 
 after _start => sub {
   my $self = $_[OBJECT];
-  my $aio_cb = sub{
+  my $aio_cb = sub {
     my ($kernel, $dirs, $nondirs) = @_[KERNEL, ARG0, ARG1];
     my $filter = $self->has_filter ? $self->filter : undef;
     if( $self->has_dir_callback ){

@@ -10,7 +10,7 @@ with 'POE::Component::DirWatch::Role::Signatures';
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
-around _file_callback => sub{
+around _file_callback => sub {
   my $orig = shift;
   my ($self, $kernel, $file) = @_[OBJECT, KERNEL, ARG0];
   my $sig = delete $self->signatures->{"$file"};
