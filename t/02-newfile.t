@@ -6,8 +6,8 @@ use POE;
 use FindBin qw($Bin);
 use File::Path;
 use Path::Class qw/dir file/;
-use Test::More  tests => 4;
-use POE::Component::DirWatch::New; (no_aio => 1);
+use Test::More tests => 4;
+use POE::Component::DirWatch::New no_aio => 1;
 
 my %FILES = (foo => 1, bar => 1);
 my $DIR   = dir($Bin, 'watch');
