@@ -254,9 +254,9 @@ event and the scheduled start of the next. Defaults to 1.
 
 =over 4
 
-=item b<has_file_callback> - predicate
+=item B<has_file_callback> - predicate
 
-=item b<clear_file_callback> - clearer
+=item B<clear_file_callback> - clearer
 
 =back
 
@@ -269,9 +269,9 @@ and remove it from the directory to avoid duplicate processing
 
 =over 4
 
-=item b<has_dir_callback> - predicate
+=item B<has_dir_callback> - predicate
 
-=item b<clear_dir_callback> - clearer
+=item B<clear_dir_callback> - clearer
 
 =back
 
@@ -283,9 +283,9 @@ representing the directory found.
 
 =over 4
 
-=item b<has_filter> - predicate
+=item B<has_filter> - predicate
 
-=item b<clear_filter> - clearer
+=item B<clear_filter> - clearer
 
 =back
 
@@ -299,9 +299,9 @@ called and false if the file should be ignored.
 
 =over 4
 
-=item b<has_next_poll> - predicate
+=item B<has_next_poll> - predicate
 
-=item b<clear_next_poll> - clearer
+=item B<clear_next_poll> - clearer
 
 =back
 
@@ -433,9 +433,9 @@ your bug as I make changes.
 
 =over 4
 
-=item #PoE & #Moose
+=item #poe & #moose on irc.perl.org
 
-=item Matt S Trout <mst@shadowcatsystems.co.uk>
+=item Matt S Trout
 
 =item Rocco Caputo
 
