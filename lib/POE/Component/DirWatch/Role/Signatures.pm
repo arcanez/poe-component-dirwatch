@@ -4,7 +4,7 @@ use POE;
 use Moose::Role;
 use File::Signature;
 
-our $VERSION = "0.001000";
+our $VERSION = "0.300000";
 
 has signatures => (
   is => 'ro',
