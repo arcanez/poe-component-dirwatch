@@ -414,8 +414,8 @@ Constructor. C<create()>s a L<POE::Session>.
 
 L<POE::Session>, L<POE::Component>, L<Moose>, L<POE>,
 
-The SVN repository for this project can be found in its Google Code project
-page - L<http://code.google.com/p/poe-component-dirwatch-object/>
+The git repository for this project can be found in on github,
+L<http://github.com/arcanez/poe-component-dirwatch/>
 
 =head1 AUTHOR
 
