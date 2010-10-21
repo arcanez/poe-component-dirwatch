@@ -449,8 +449,7 @@ your bug as I make changes.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2008 Guillermo Roditi.  All Rights Reserved.  This is
-free software; you may redistribute it and/or modify it under the same
-terms as Perl itself.
+Copyright 2006-2008 Guillermo Roditi. This is free software; you may
+redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut
