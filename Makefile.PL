@@ -1,24 +1,30 @@
-#! /usr/bin/perl -w
-
 # Load the Module::Install bundled in ./inc/
 use inc::Module::Install;
 
 # Define metadata
 name 'POE-Component-DirWatch';
+author 'Guillermo Roditi <groditi@cpan.org>';
+license 'perl';
 abstract 'Directory Watcher for POE';
-all_from 'lib/POE/Component/DirWatch.pm';
 
-# Specific dependencies
+all_from 'lib/POE/Component/DirWatch.pm';
+readme_from ('lib/POE/Component/DirWatch.pm')
+
+tests 't/*.t';
+
 requires 'POE'             => 0.12;
 requires 'Moose'           => 0.24;
-requires 'Time::HiRes'     => 0;
 requires 'Path::Class'     => 0;
 requires 'File::Signature' => 0;
 requires 'MooseX::Types::Path::Class' => 0;
 
-#recommended (for performance)
 recommends 'POE::Component::AIO' => '1.00';
 
-build_requires 'Test::More' => 0;
+test_requires 'FindBin';
+test_requires 'Time::HiRes';
+test_requires 'Test::More';
+
+repository 'http://github.com/arcanez/poe-component-dirwatch';
+bugtracker 'https://rt.cpan.org/Dist/Display.html?Name=POE-Component-DirWatch';
 
 WriteAll;
