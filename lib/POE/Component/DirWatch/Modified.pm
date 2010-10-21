@@ -14,8 +14,10 @@ around '_file_callback' => sub {
   my $orig = shift;
   my ($self, $file) = @_[OBJECT, ARG0];
   my $sigs = $self->signatures;
-  return if exists $sigs->{"$file"} && $sigs->{"$file"}->is_same;
-  $orig->(@_);
+  my $new_sig = $self->_generate_signature($file);
+  return if exists $sigs->{"$file"} && $sigs->{"$file"} eq $new_sig;
+  $sigs->{"$file"} = $new_sig;
+  return $orig->(@_);
 };
 
 __PACKAGE__->meta->make_immutable;
