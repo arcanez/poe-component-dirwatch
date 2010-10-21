@@ -8,7 +8,7 @@ license 'perl';
 abstract 'Directory Watcher for POE';
 
 all_from 'lib/POE/Component/DirWatch.pm';
-readme_from ('lib/POE/Component/DirWatch.pm')
+readme_from ('lib/POE/Component/DirWatch.pm');
 
 tests 't/*.t';
 
