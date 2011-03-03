@@ -18,6 +18,7 @@ POE::Session->create
    {
     _start   => \&_tstart,
     _stop    => \&_tstop,
+    _child   => sub {},
     _endtest => sub { $_[KERNEL]->post(dirwatch_test => 'shutdown') }
    },
   );

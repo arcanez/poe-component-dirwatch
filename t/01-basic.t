@@ -17,6 +17,7 @@ POE::Session->create(
      {
       _start       => \&_tstart,
       _stop        => \&_tstop,
+      _child       => sub {},
      },
     );
 

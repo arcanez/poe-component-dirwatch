@@ -78,6 +78,8 @@ sub BUILD {
         _start   => '_start',
         _pause   => '_pause',
         _resume  => '_resume',
+        _child   => '_child',
+        _stop    => '_stop',
         shutdown => '_shutdown',
         poll     => '_poll',
         ($self->has_dir_callback  ? (dir_callback  => '_dir_callback')  : () ),
@@ -119,6 +121,10 @@ sub _resume {
   $when += $t if $t > $when;
   $self->next_poll( $kernel->alarm_set(poll => $when) );
 }
+
+sub _stop {}
+
+sub _child {}
 
 #--------#---------#---------#---------#---------#---------#---------#---------
 
