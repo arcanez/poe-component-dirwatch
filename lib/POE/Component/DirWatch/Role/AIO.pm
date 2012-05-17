@@ -1,6 +1,6 @@
 package POE::Component::DirWatch::Role::AIO;
 
-our $VERSION = "0.300000";
+our $VERSION = "0.300001";
 
 use POE;
 use IO::AIO qw/2/;

@@ -1,6 +1,6 @@
 package POE::Component::DirWatch;
 
-our $VERSION = "0.300000";
+our $VERSION = "0.300001";
 
 use POE;
 use Moose;
