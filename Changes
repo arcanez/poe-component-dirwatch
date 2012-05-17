@@ -1,4 +1,6 @@
 Revision history for POE-Component-DirWatch
+0.300001 May 17, 2012
+         Update rt.cpan.org link to not require auth
 
 0.300000 Oct 21, 2010
          Fixed test typo
