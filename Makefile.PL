@@ -13,6 +13,7 @@ tests 't/*.t';
 
 requires 'POE'             => 0.12;
 requires 'Moose'           => 0.24;
+requires 'Class::Load'     => 0.20;
 requires 'Path::Class'     => 0;
 requires 'File::Signature' => 0;
 requires 'MooseX::Types::Path::Class' => 0;

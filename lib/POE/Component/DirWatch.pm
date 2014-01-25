@@ -4,14 +4,14 @@ our $VERSION = "0.300001";
 
 use POE;
 use Moose;
-use Class::MOP;
+use Class::Load;
 use MooseX::Types::Path::Class qw/Dir/;
 
 sub import {
   my ($class, %args) = @_;
   return if delete $args{no_aio};
-  return unless eval { Class::MOP::load_class("POE::Component::AIO") };
-  if (eval { Class::MOP::load_class("POE::Component::DirWatch::Role::AIO") }){
+  return unless eval { Class::Load::load_class("POE::Component::AIO") };
+  if (eval { Class::Load::load_class("POE::Component::DirWatch::Role::AIO") }){
     $class->meta->make_mutable;
     POE::Component::DirWatch::Role::AIO->meta->apply($class->meta);
     $class->meta->make_immutable;
