@@ -23,7 +23,7 @@ test_requires 'FindBin';
 test_requires 'Time::HiRes';
 test_requires 'Test::More';
 
-repository 'http://github.com/arcanez/poe-component-dirwatch';
+repository 'https://github.com/arcanez/poe-component-dirwatch';
 bugtracker 'https://rt.cpan.org/Public/Dist/Display.html?Name=POE-Component-DirWatch';
 
 WriteAll;
