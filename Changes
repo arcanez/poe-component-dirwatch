@@ -1,4 +1,9 @@
 Revision history for POE-Component-DirWatch
+0.300002 Jan 19, 2015
+         RT#90967: use Class::Load instead of Class::MOP (thanks zoffixznet)
+         use https for github url instead of http (thanks dolmen)
+         disable export of Moose sugar (thanks itcharlie)
+
 0.300001 May 17, 2012
          Update rt.cpan.org link to not require auth
 
