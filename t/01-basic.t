@@ -4,7 +4,7 @@ use POE;
 use FindBin qw($Bin);
 use File::Path;
 use Path::Class qw/dir file/;
-use Test::More  tests => 6;
+use Test::More  tests => 7;
 use POE::Component::DirWatch;
 
 my %FILES = (foo => 1, bar => 1);
@@ -61,6 +61,7 @@ sub _tstart {
     );
 
   ok($watcher->alias eq 'dirwatch_test', 'Alias successfully set');
+  is($watcher->can('has') , undef , 'Is Moose has function exported? ');
 }
 
 sub _tstop{
