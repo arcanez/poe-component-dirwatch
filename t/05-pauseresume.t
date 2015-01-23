@@ -57,16 +57,16 @@ sub _tstop{
 my $time;
 sub file_found{
   if(++$state == 1){
-    $time = time + 3;
+    $time = time + 4;
     $poe_kernel->post(dirwatch_test => '_pause', $time);
   } elsif($state == 2){
     ok($time <= time, "Pause Until Works");
-    $time = time + 3;
+    $time = time + 4;
     $poe_kernel->post(dirwatch_test => '_pause');
         $poe_kernel->post(dirwatch_test => '_resume',$time);
   } elsif($state == 3){
     ok($time <= time, "Pause - Resume When Works");
-    $time = time + 3;
+    $time = time + 4;
     $poe_kernel->post(dirwatch_test => '_pause');
     $poe_kernel->post(dirwatch_test => '_resume',$time);
   } elsif($state == 4){
