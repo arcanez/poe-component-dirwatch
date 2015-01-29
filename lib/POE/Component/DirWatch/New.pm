@@ -3,7 +3,7 @@ package POE::Component::DirWatch::New;
 use POE;
 use Moose;
 
-our $VERSION = "0.300002";
+our $VERSION = "0.300003";
 
 extends 'POE::Component::DirWatch';
 with 'POE::Component::DirWatch::Role::Signatures';
