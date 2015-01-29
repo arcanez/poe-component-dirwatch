@@ -1,4 +1,7 @@
 Revision history for POE-Component-DirWatch
+0.300003 Jan 29, 2015
+         add one second to pauseresume.t (thanks itcharlie)
+
 0.300002 Jan 19, 2015
          RT#90967: use Class::Load instead of Class::MOP (thanks zoffixznet)
          use https for github url instead of http (thanks dolmen)
