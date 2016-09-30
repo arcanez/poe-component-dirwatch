@@ -1,4 +1,7 @@
 Revision history for POE-Component-DirWatch
+0.300004 Sep 29, 2016
+         don't ship MYMETA.json or MYMETA.yml
+
 0.300003 Jan 29, 2015
          add one second to pauseresume.t (thanks itcharlie)
 
