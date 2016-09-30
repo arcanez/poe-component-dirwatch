@@ -23,3 +23,4 @@ cover_db
 ^\._.*$
 ^t\/600_todo_tests\/$
 \.shipit
+^MYMETA
